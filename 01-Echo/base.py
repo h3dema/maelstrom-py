@@ -1,10 +1,19 @@
+"""
+Maelstrom funciona com qualquer tipo de binário.
+As mensagens são enviadas via stdin,
+recebidas em stdout e
+as informações são registradas em stderr.
+
+Este modulo contem as funções básicas de comunicação.
+"""
+
 import sys
-import json
-import select
 import datetime
+import select
+import json
 
 
-class EchoServer(object):
+class BaseServer(object):
 
     def log(self, *args):
         """Helper function for logging stuff to stderr"""
@@ -17,6 +26,9 @@ class EchoServer(object):
 
     def get_line(self):
         """Handles a message from stdin, if one is currently available."""
+
+        # select.select(rlist, wlist, xlist): first 3 arguments are iterables of file descriptors to be waited for to be ready for reading/writing/"exceptional condition":
+        # thus, wait until sys.stdin is ready for reading
         if sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
             return None
 
@@ -25,21 +37,7 @@ class EchoServer(object):
 
     def send_msg(self, msg):
         """Sends a raw message object"""
-        self.log(f"Sent: {msg}")
         json.dump(msg, sys.stdout)
         sys.stdout.write('\n')
         sys.stdout.flush()
-
-    def main(self):
-        while True:
-            try:
-                line = self.get_line()
-                self.send_msg(f"Received #{line}")
-            except KeyboardInterrupt:
-                self.log("Program interrupted. Leaving..")
-                break
-
-
-if __name__ == "__main__":
-    echo = EchoServer()
-    echo.main()
+        self.log(f"Sent: {msg}")
