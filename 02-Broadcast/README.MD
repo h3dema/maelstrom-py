@@ -9,7 +9,6 @@ No Maelstrom, podemos criar um sistema de transmissão com uma API simples:
 
 O Maelstrom verifica se cada mensagem de broadcast chega (eventualmente) a cada nó da rede e pode dizer quanto tempo leva para isso acontecer - bem como quantas mensagens foram necessárias.
 
-
 A ideia deste bloco de códigos é construirmos um conjunto de sistemas de broadcast.
-Construiremos uma abstração reutilizável para servidores de rede e veremos como falhas de rede e diferentes estratégias para novas tentativas afetam a entrega de mensagens.
+Construiremos uma abstração reutilizável para servidores de rede (node.py) e veremos como falhas de rede e diferentes estratégias para novas tentativas afetam a entrega de mensagens.
 
