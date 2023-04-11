@@ -1,3 +1,11 @@
+#!/usr/bin/python3
+"""
+
+To test:
+../maelstrom/maelstrom test -w broadcast --bin broadcast.py --time-limit 5 --rate 10
+
+"""
+
 from node import Node
 
 
@@ -15,17 +23,16 @@ class Gossip(Node):
         # Our set of messages received.
         self.messages = set()
 
-
     def topology(self, msg):
         self.peers = msg["body"]["topology"][self.nodeId]
         self.log(f"My peers are {self.peers}")
-        self.reply(msg, {type: 'topology_ok'})
+        self.reply(msg, {"type": 'topology_ok'})
 
     def read(self, msg):
         self.reply(
             msg,
             {"type": 'read_ok',
-             "messages": self.messages
+             "messages": list(self.messages),
              }
         )
 
@@ -37,12 +44,17 @@ class Gossip(Node):
         msg_rec = msg["body"]["message"]
         if msg_rec not in self.messages:
             # esta mensagem ainda não foi recebida, portanto salva em self.messages
-            self.messages.add(msg_rec);
+            self.messages.add(msg_rec)
             # Broadcast to peers except the one who sent it to us
             for peer in self.peers:
-                if peer == msg.src:
+                if peer == msg["src"]:
                     # skip the source of the message
                     continue
-                self.retryRPC(peer, {type: 'broadcast', "message": msg_rec})
+                self.retryRPC(peer, {"type": 'broadcast', "message": msg_rec})
 
-        self.reply(msg, {type: 'broadcast_ok'})
+        self.reply(msg, {"type": 'broadcast_ok'})
+
+
+if __name__ == "__main__":
+    broadcast = Gossip()
+    broadcast.main()
