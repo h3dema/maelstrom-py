@@ -24,10 +24,11 @@ Assim aqui apresentaremos os outros quatro.
 
 As linhas abaixo mostram como criar um ambiente de desenvolvimento separado da sua instalação principal usando `venv` no linux.
 Utilizamos __pip__ para instalar os módulos necessários.
+No Ubuntu os comandos são:
 
 ```
-python3 -m venv venv
-bash .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 
 pip3 install -r requirements.txt
 ```
@@ -38,9 +39,9 @@ pip3 install -r requirements.txt
 O Maelstrom utiliza alguns pacotes para funcionar. No Ubuntu basta:
 
 ```
-apt install openjdk-17-jdk
-apt install graphviz
-apt install gnuplot
+sudo apt install openjdk-17-jdk
+sudo apt install graphviz
+sudo apt install gnuplot
 ```
 
 Você precisa baixar o tarball mais recente (maelstrom.tar.bz2, não o código-fonte!) do GitHub.
@@ -48,6 +49,6 @@ Descompacte-o e execute ./maelstrom <args> para iniciar o Maelstrom.
 
 ```
 wget https://github.com/jepsen-io/maelstrom/releases/download/v0.2.3/maelstrom.tar.bz2
-tar zxvf maelstrom.tar.bz2
+tar xvjf maelstrom.tar.bz2
 cd maelstrom
 ```
