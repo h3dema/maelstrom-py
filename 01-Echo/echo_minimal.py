@@ -5,7 +5,7 @@ Imprimimos em stderr porque é para lá que vão as informações de depuração
 stdout é reservado para mensagens de rede.
 
 To test:
-../maelstrom/maelstrom test -w echo --bin echo_v_00.py --nodes n1 --time-limit 10 --log-stderr
+../maelstrom/maelstrom test -w echo --bin echo_minimal.py --nodes n1 --time-limit 10 --log-stderr
 
 This program is not complete, so it generates an error.
 

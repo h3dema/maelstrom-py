@@ -7,7 +7,7 @@ deve responder ao Maelstrom.
 
 
 To test:
-../maelstrom/maelstrom test -w echo --bin echo_v_01.py --nodes n1 --time-limit 10 --log-stderr
+../maelstrom/maelstrom test -w echo --bin echo.py --nodes n1 --time-limit 10 --log-stderr
 
 """
 import json

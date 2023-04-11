@@ -11,3 +11,4 @@ Vamos seguir os mesmos passos mostrados em [A Simple Echo Server](https://github
 - echo.py
     + Versão final do servidor Echo com os dois handlers necessários para funcionamento do servidor: "init" e "echo".
 
+> No cabeçalho de cada modulo python (acima), você irá encontrar o comando para testa-lo com o Maelstrom.
