@@ -17,20 +17,19 @@ from base import BaseServer
 class EchoServer(BaseServer):
 
     def __init__(self):
-        self.node_id = None
-        self._next_msg_id = 0
-        self.handlers = dict()
+        """ Configuracao basica do objeto """
+        super().__init__()  # não esquecer de chamar o __init__() da superclasse
+
+        # configura os handlers
         self.on("init", self.msg_init)
         self.on("echo", self.msg_echo)
 
     @property
     def next_msg_id(self) -> int:
+        """ _id_ para a nova mensagem (sequencial) """
         _id = self._next_msg_id
         self._next_msg_id += 1
         return _id
-
-    def on(self, msg_type: str, handler):
-        self.handlers[msg_type] = handler
 
     def msg_nope(self, msg, *args, **kwargs):
         self.log(f"Error: Handler not create for message: {msg}")

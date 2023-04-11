@@ -7,7 +7,7 @@ stdout é reservado para mensagens de rede.
 To test:
 ../maelstrom/maelstrom test -w echo --bin echo_minimal.py --nodes n1 --time-limit 10 --log-stderr
 
-This program is not complete, so it generates an error.
+Este programa não está completo, por isso gera um erro quando chamamos Maelstrom.
 
 """
 from base import BaseServer
@@ -16,6 +16,8 @@ from base import BaseServer
 class EchoServer(BaseServer):
 
     def main(self):
+        """ cria o loop basico de entrada/saida do servidor
+        """
         while True:
             try:
                 if (line := self.get_line()) is not None:
