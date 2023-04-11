@@ -7,12 +7,13 @@ enviar nossos próprios RPCs.
 
 Este modulo contem as funções básicas de comunicação.
 """
-
 import sys
 import datetime
 import select
 import json
 import threading
+
+from process import timeout_func
 
 
 class Node(object):
@@ -26,6 +27,8 @@ class Node(object):
         self.handlers = dict()  # dictionary com os handlers das mensagens (mapea um tipo de mensagem para um handler)
 
         self.lock = threading.Lock()
+        self.lock_log = threading.Lock()
+        self.lock_send = threading.Lock()
 
         self.on("init", self.handle_init)
 
@@ -34,11 +37,12 @@ class Node(object):
         """ node ID do servidor """
         return self.node_id
 
-    def nodeIds(self):
+    def nodeIds(self) -> list:
         """ todos os IDs """
         return self.node_ids
 
-    def new_msg_id(self):
+    @property
+    def new_msg_id(self) -> int:
         """ retorna o id da mensagem, controla o acesso com LOCK """
         self.lock.acquire()
         _id = self.next_msg_id
@@ -52,12 +56,14 @@ class Node(object):
 
     def log(self, *args):
         """ Função auxiliar para registrar coisas no stderr """
+        self.lock_log.acquire()  # usa lock, para garantir que as mensagens não fiquem interlaçadas
         sys.stderr.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "))
         for i in range(len(args)):
             sys.stderr.write(str(args[i]))
             if i < (len(args) - 1):
                 sys.stderr.write(" ")
         sys.stderr.write('\n')
+        self.lock_log.release()
 
     def get_line(self):
         """ Lida com uma mensagem do stdin, se houver uma disponível no momento """
@@ -71,13 +77,18 @@ class Node(object):
         line = sys.stdin.readline()
         return line if line else None
 
+    def msg_nope(self, msg, *args, **kwargs):
+        self.log(f"Error: Handler not created for message: {msg}")
+
     def send(self, dest: str, body: dict):
         """ Envia um objeto de mensagem (em json) """
         msg = {"src": self.node_id, "dest": dest, "body": body}
+        self.log(f"Sent: {msg}")
+        self.lock_send.acquire()  # usa lock, para garantir que as mensagens enviadas estejam coerentes (não interlaçadas)
         json.dump(msg, sys.stdout)
         sys.stdout.write('\n')
         sys.stdout.flush()
-        self.log(f"Sent: {msg}")
+        self.lock_send.release()
 
     def reply(self, msg, body):
         """ Responda a uma solicitação com um determinado corpo de resposta """
@@ -89,46 +100,46 @@ class Node(object):
             )
         else:
             body2 = body.copy()
+            body2["msg_id"] = self.new_msg_id
             body2["in_reply_to"] = msg["body"]["msg_id"]
             self.send(msg["src"], body2)
 
     def rpc(self, dest, body):
         """
+            TODO:
             - execute function in a thread
             - if timeout, return error
         """
-        body_err = {
-            "type": 'error',
-            "in_reply_to": msg_id,
-            "code": 0,
-            "text": 'RPC request timed out'
-        }
         msg_id = self.new_msg_id
-
-        if msg_id not in self.handlers:
+        msg_type = body["type"]
+        if msg_type not in self.handlers:
             # envia mensagem de erro
+            self.log(f"Error: {body['type']} -> {body}")
+
+            body_err = {
+                "type": 'error',
+                "in_reply_to": msg_id,
+                "code": 0,
+                "text": 'RPC request timed out'
+            }
             self.send(dest, body_err)
-            return False, body_err
+            return False
 
         body2 = body.copy()
         body2["msg_id"] = msg_id
 
-        # executa,
-        # se timeout, retorna "reject"
-        result = self.handlers[msg_id](dest, body)
-
-        # And send request
-        self.send(dest, result)
-        return True, result
+        # manda mensagem
+        self.send(dest, body2)
+        return True
 
     def retryRPC(self, dest, body):
         """ Send an RPC request, and if it fails, retry it forever. """
-        status = False
-        while not status:
-            status, result = self.rpc(dest, body)
-            if not status:
-                self.log(f"Retrying RPC request to {dest} w/ {body}")
-        return result
+        while True:
+            if self.rpc(dest, body):
+                # funcionou, então sai!
+                break
+            # loga que não funcionou
+            self.log(f"Retrying RPC request to {dest} w/ {body}")
 
     # -------------------------------------
     #
@@ -137,13 +148,28 @@ class Node(object):
     # -------------------------------------
     def handle_init(self, req):
         body = req["body"]
-        self.nodeId = body["node_id"]
-        self.nodeIds = body["node_ids"]
-        self.log(f"Node {self.nodeId} initialized")
+        self.node_id = body["node_id"]
+        self.node_ids = body["node_ids"]
+        self.log(f"Node {self.node_id} initialized")
 
         body = {
             "in_reply_to": body["msg_id"],
             "type": "init_ok",
         }
         self.send(req["src"], body)
+
+    def main(self):
+        while True:
+            try:
+                if (line := self.get_line()) is not None:
+                    self.log(f"Received: {line}")
+                    # parse the message
+                    msg = json.loads(line)
+                    body = msg["body"]
+                    msg_type = body["type"]
+                    self.handlers.get(msg_type, self.msg_nope)(msg)
+
+            except KeyboardInterrupt:
+                self.log("Program interrupted. Leaving..")
+                break
 
