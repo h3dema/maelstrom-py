@@ -13,9 +13,9 @@ class Gossip(Node):
 
     def __init__(self):
         super().__init__()
-        self.on("topology", self.topology)
-        self.on("read", self.read)
-        self.on("broadcast", self.broadcast)
+        self.on("topology", self.handle_topology)
+        self.on("read", self.handle_read)
+        self.on("broadcast", self.handle_broadcast)
 
         # Our local peers: an array of nodes.
         self.peers = []
@@ -23,12 +23,12 @@ class Gossip(Node):
         # Our set of messages received.
         self.messages = set()
 
-    def topology(self, msg):
+    def handle_topology(self, msg):
         self.peers = msg["body"]["topology"][self.nodeId]
         self.log(f"My peers are {self.peers}")
         self.reply(msg, {"type": 'topology_ok'})
 
-    def read(self, msg):
+    def handle_read(self, msg):
         self.reply(
             msg,
             {"type": 'read_ok',
@@ -36,7 +36,7 @@ class Gossip(Node):
              }
         )
 
-    def broadcast(self, msg):
+    def handle_broadcast(self, msg):
         """ Quando recebermos uma mensagem de broadcast,
             adicionamos a mensagem ao conjunto de mensagens recebidas e
             transmitimos esta mensagem a todos os peers configurados (exceto aquele que enviou a mensagem)
