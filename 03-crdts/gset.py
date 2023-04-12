@@ -2,29 +2,12 @@
 """
 
 
-Preparation:
-===========
-
-cp 02-Broadcast/node.py 03-crdts/
-
-
 To test:
-../maelstrom/maelstrom test -w broadcast --bin broadcast.py --time-limit 5 --rate 10
-
+../maelstrom/maelstrom test -w g-set --bin gset.py
 
 """
 import threading
 from node import Node
-
-
-def timely(func, **kwargs):
-    """ decorator: executa a funcao `func` a cada segundo """
-    def wrapper_func():
-        func()
-        threading.Timer(kwargs.get("period", 1), wrapper_func).start()
-        print("after Timer")
-
-    return wrapper_func
 
 
 class GSet(Node):
@@ -32,7 +15,7 @@ class GSet(Node):
     def __init__(self) -> None:
         super().__init__()
         self.crdt = set()
-        self.replicate_interval = 5000
+        self.replicate_interval = 5  # seconds
 
         self.on("add", self.handle_add)
         self.on("read", self.handle_read)
@@ -53,7 +36,6 @@ class GSet(Node):
         self.crdt.update(set(req["body"]["value"]))
         self.log(f"state after replicate: {self.crdt}")
 
-    @timely
     def periodic_replicate(self):
         self.log('Replicate!')
         for peer in self.nodeIds():
@@ -61,6 +43,8 @@ class GSet(Node):
                 # não precisa mandar para ele mesmo
                 continue
             self.send(peer, {"type": 'replicate', "value": list(self.crdt)})
+        # chama o mesmo metodo com o intervalo definido em __init__()
+        threading.Timer(self.replicate_interval, self.periodic_replicate).start()
 
     def handle_init(self, req):
         super().handle_init(req)  # call superclass to perform initialization of the node
@@ -68,13 +52,6 @@ class GSet(Node):
         self.periodic_replicate()
 
 
-
 if __name__ == "__main__":
-    # gset = GSet()
-    # gset.main()
-
-    def func():
-        import time
-        print("time", time.time())
-
-    func()
+    gset = GSet()
+    gset.main()
