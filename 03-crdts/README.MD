@@ -18,3 +18,13 @@ Se nosso conjunto de elementos for razoavelmente pequeno, de modo que caiba em u
 
 ## Contadores
 
+
+
+# Preparation:
+
+Copiar o arquivo node.py de Broadcast.
+
+```
+cp 02-Broadcast/node.py 03-crdts/
+
+```
