@@ -13,8 +13,6 @@ import select
 import json
 import threading
 
-from process import timeout_func
-
 
 class Node(object):
     """ Implementa as funcoes basicas de comunicacao do servidor Echo """
